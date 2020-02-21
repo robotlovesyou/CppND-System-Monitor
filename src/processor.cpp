@@ -1,5 +1,6 @@
-#include "processor.h"
 #include <algorithm>
+#include "processor.h"
+
 
 // Calculates Current CPU Utilization from the system aggregate.
 // Calculations made according to this Stack Overflow answer https://stackoverflow.com/a/23376195

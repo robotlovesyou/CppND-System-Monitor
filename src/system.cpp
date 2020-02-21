@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <unistd.h>
 #include <cstddef>
 #include <set>
@@ -7,11 +8,13 @@
 #include "process.h"
 #include "processor.h"
 #include "system.h"
+#include "linux_parser.h"
 
 using std::set;
 using std::size_t;
 using std::string;
 using std::vector;
+using LinuxParser::MemoryValues;
 
 // TODO: Return the system's CPU
 Processor& System::Cpu() { return cpu_; }
@@ -23,7 +26,11 @@ vector<Process>& System::Processes() { return processes_; }
 std::string System::Kernel() { return string(); }
 
 // TODO: Return the system's memory utilization
-float System::MemoryUtilization() { return 0.0; }
+float System::MemoryUtilization() {
+    MemoryValues values{};
+    LinuxParser::MemoryUtilization(values);
+    return (float)(values.total - values.free) / std::max((float)values.total, 1.0f);
+}
 
 // TODO: Return the operating system name
 std::string System::OperatingSystem() { return string(); }
