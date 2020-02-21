@@ -1,9 +1,9 @@
 #include <dirent.h>
 #include <unistd.h>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <iostream>
 
 #include "linux_parser.h"
 
@@ -12,7 +12,7 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-// DONE: An example of how to read data from the filesystem
+// Returns a string describing the operating system
 string LinuxParser::OperatingSystem() {
   string line;
   string key;
@@ -35,15 +35,15 @@ string LinuxParser::OperatingSystem() {
   return value;
 }
 
-// DONE: An example of how to read data from the filesystem
+// Returns a string describing the kernel
 string LinuxParser::Kernel() {
-  string os, kernel;
+  string os, kernel, version;
   string line;
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
-    linestream >> os >> kernel;
+    linestream >> os >> version >> kernel;
   }
   return kernel;
 }
@@ -69,22 +69,22 @@ vector<int> LinuxParser::Pids() {
 }
 
 // Fills out the provided MemoryValues with values parsed from /proc/meminfo;
-void LinuxParser::MemoryUtilization(MemoryValues &values) {
-    string line, key;
-    long val;
-    std::ifstream file_stream(kProcDirectory + kMeminfoFilename);
-    if (file_stream.is_open()) {
-        while(std::getline(file_stream, line)) {
-            std::istringstream line_stream(line);
-            line_stream >> key >> val;
-            if (key == kMemFree + ":") {
-                values.free = val;
-            } else if (key == kMemTotal + ":") {
-                values.total = val;
-            }
-        }
-        file_stream.close();
+void LinuxParser::MemoryUtilization(MemoryValues& values) {
+  string line, key;
+  long val;
+  std::ifstream file_stream(kProcDirectory + kMeminfoFilename);
+  if (file_stream.is_open()) {
+    while (std::getline(file_stream, line)) {
+      std::istringstream line_stream(line);
+      line_stream >> key >> val;
+      if (key == kMemFree + ":") {
+        values.free = val;
+      } else if (key == kMemTotal + ":") {
+        values.total = val;
+      }
     }
+    file_stream.close();
+  }
 }
 
 // TODO: Read and return the system uptime
@@ -104,16 +104,15 @@ long LinuxParser::ActiveJiffies() { return 0; }
 long LinuxParser::IdleJiffies() { return 0; }
 
 // Fills out the provided CPUValues structure with values parsed from /proc/stat
-void LinuxParser::CpuUtilization(CPUValues &values) {
+void LinuxParser::CpuUtilization(CPUValues& values) {
   string line, cpu;
   std::ifstream file_stream(kProcDirectory + kStatFilename);
   if (file_stream.is_open() && std::getline(file_stream, line)) {
-      std::istringstream line_stream(line);
-      line_stream >>
-        cpu >> values.user >> values.nice >> values.system >> values.idle >>
-        values.io_wait >> values.irq >> values.soft_irq >> values.steal >>
-        values.guest >> values.guest_nice;
-      file_stream.close();
+    std::istringstream line_stream(line);
+    line_stream >> cpu >> values.user >> values.nice >> values.system >>
+        values.idle >> values.io_wait >> values.irq >> values.soft_irq >>
+        values.steal >> values.guest >> values.guest_nice;
+    file_stream.close();
   }
 }
 

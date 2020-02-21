@@ -1,39 +1,41 @@
-#include <algorithm>
 #include <unistd.h>
+#include <algorithm>
 #include <cstddef>
 #include <set>
 #include <string>
 #include <vector>
 
+#include "linux_parser.h"
 #include "process.h"
 #include "processor.h"
 #include "system.h"
-#include "linux_parser.h"
 
+using LinuxParser::MemoryValues;
 using std::set;
 using std::size_t;
 using std::string;
 using std::vector;
-using LinuxParser::MemoryValues;
 
-// TODO: Return the system's CPU
+// Accessor function for cpu member
 Processor& System::Cpu() { return cpu_; }
 
 // TODO: Return a container composed of the system's processes
 vector<Process>& System::Processes() { return processes_; }
 
-// TODO: Return the system's kernel identifier (string)
-std::string System::Kernel() { return string(); }
+// Returns the name of the kernel
+std::string System::Kernel() { return LinuxParser::Kernel(); }
 
-// TODO: Return the system's memory utilization
+// Calculates current memory utilization.
+// calculation based on answer given at https://stackoverflow.com/a/41251290
 float System::MemoryUtilization() {
-    MemoryValues values{};
-    LinuxParser::MemoryUtilization(values);
-    return (float)(values.total - values.free) / std::max((float)values.total, 1.0f);
+  MemoryValues values{};
+  LinuxParser::MemoryUtilization(values);
+  return (float)(values.total - values.free) /
+         std::max((float)values.total, 1.0f);
 }
 
-// TODO: Return the operating system name
-std::string System::OperatingSystem() { return string(); }
+// Returns the name of the operating system.
+std::string System::OperatingSystem() { return LinuxParser::OperatingSystem(); }
 
 // TODO: Return the number of processes actively running on the system
 int System::RunningProcesses() { return 0; }

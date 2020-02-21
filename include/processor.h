@@ -9,10 +9,9 @@ class Processor {
   float Utilization();
 
  private:
-    CPUValues prev_values_{};
-    static long CPUIdle(CPUValues &values);
-    static long CPUBusy(CPUValues &values);
-
+  CPUValues prev_values_{};
+  static long CPUIdle(CPUValues &values);
+  static long CPUBusy(CPUValues &values);
 };
 
 #endif
