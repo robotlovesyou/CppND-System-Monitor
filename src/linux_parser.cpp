@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <string>
 #include <vector>
+#include <sstream>
+#include <iostream>
 
 #include "linux_parser.h"
 
@@ -87,13 +89,16 @@ long LinuxParser::IdleJiffies() { return 0; }
 
 // Fills out the provided CPUValues structure with values parsed from /proc/stat
 void LinuxParser::CpuUtilization(CPUValues &values) {
-  // Open the /proc/stat file as an ifstream
-  // if the file is open
-  // read the first line into a stream
-  // create an istringstream from it
-  // parse the values into local variables (check for valid result using boolean overload?)
-  // close the file stream
-  // fill out the provided CPUValues with the results
+  string line, cpu;
+  std::ifstream file_stream(kProcDirectory + kStatFilename);
+  if (file_stream.is_open() && std::getline(file_stream, line)) {
+      std::istringstream line_stream(line);
+      line_stream >>
+        cpu >> values.user >> values.nice >> values.system >> values.idle >>
+        values.io_wait >> values.irq >> values.soft_irq >> values.steal >>
+        values.guest >> values.guest_nice;
+      file_stream.close();
+  }
 }
 
 // TODO: Read and return the total number of processes
