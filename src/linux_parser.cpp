@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <string>
 #include <vector>
+#include <sstream>
+#include <iostream>
 
 #include "linux_parser.h"
 
@@ -85,8 +87,19 @@ long LinuxParser::ActiveJiffies() { return 0; }
 // TODO: Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() { return 0; }
 
-// TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { return {}; }
+// Fills out the provided CPUValues structure with values parsed from /proc/stat
+void LinuxParser::CpuUtilization(CPUValues &values) {
+  string line, cpu;
+  std::ifstream file_stream(kProcDirectory + kStatFilename);
+  if (file_stream.is_open() && std::getline(file_stream, line)) {
+      std::istringstream line_stream(line);
+      line_stream >>
+        cpu >> values.user >> values.nice >> values.system >> values.idle >>
+        values.io_wait >> values.irq >> values.soft_irq >> values.steal >>
+        values.guest >> values.guest_nice;
+      file_stream.close();
+  }
+}
 
 // TODO: Read and return the total number of processes
 int LinuxParser::TotalProcesses() { return 0; }
