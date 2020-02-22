@@ -130,7 +130,6 @@ long LinuxParser::UpTime() {
     auto line_processor = [&](string &line) -> bool {
         std::istringstream line_stream(line);
         line_stream >> uptime >> idle_time;
-        std::cout << uptime << std::endl;
         return false; // done after the first line
     };
     ProcessFileLines(kProcDirectory + kUptimeFilename, line_processor);

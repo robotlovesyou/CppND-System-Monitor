@@ -84,6 +84,11 @@ long ActiveJiffies(int pid);
 long IdleJiffies();
 
 // Processes
+//struct ProcessValues {
+//public:
+//    int pid{};
+//    long
+//};
 std::string Command(int pid);
 
 std::string Ram(int pid);
