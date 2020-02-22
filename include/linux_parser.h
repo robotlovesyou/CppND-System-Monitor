@@ -84,11 +84,26 @@ long ActiveJiffies(int pid);
 long IdleJiffies();
 
 // Processes
-//struct ProcessValues {
-//public:
-//    int pid{};
-//    long
-//};
+
+
+enum PasswdParts {
+    kName = 0,
+    kPassword,
+    kUserId,
+    kGroupId,
+    kGecos,
+    kHomeDir,
+    kShell
+};
+
+struct ProcessValues {
+public:
+    int pid{};
+    std::string user_id{};
+    std::string user{};
+    long vm_size{};
+};
+std::vector<ProcessValues> ProcessValuesList();
 std::string Command(int pid);
 
 std::string Ram(int pid);

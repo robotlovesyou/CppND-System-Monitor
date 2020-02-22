@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <algorithm>
+#include <iostream>
 #include <cstddef>
 #include <set>
 #include <string>
@@ -11,6 +12,7 @@
 #include "system.h"
 
 using LinuxParser::MemoryValues;
+using LinuxParser::ProcessValues;
 using std::set;
 using std::size_t;
 using std::string;
@@ -19,8 +21,17 @@ using std::vector;
 // Accessor function for cpu member
 Processor& System::Cpu() { return cpu_; }
 
-// TODO: Return a container composed of the system's processes
-vector<Process>& System::Processes() { return processes_; }
+// container composed of the system's processes
+vector<Process>& System::Processes() {
+    // TODO: Do something useful with the processes class member...
+    processes_.clear();
+    vector<ProcessValues> process_list = LinuxParser::ProcessValuesList();
+    for(auto const &pv: process_list) {
+        Process process(pv);
+        processes_.push_back(process);
+    }
+    return processes_;
+}
 
 // Returns the name of the kernel
 std::string System::Kernel() { return LinuxParser::Kernel(); }

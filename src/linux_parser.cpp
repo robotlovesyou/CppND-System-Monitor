@@ -43,8 +43,8 @@ map<string, string> LinuxParser::NameById() {
     map<string, string> result{};
     auto line_processor = [&](string &line) -> bool {
         vector<string> parts = SplitString(line, ':');
-        if (parts.size() >= 3) {
-            result[parts[0]] = parts[1];
+        if (parts.size() >= kUserId) {
+            result[parts[kUserId]] = parts[kName];
         }
         return true;
     };
@@ -181,6 +181,47 @@ int LinuxParser::TotalProcesses() {
 // Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
     return ProcessCount(kProcDirectory + kStatFilename, "procs_running");
+}
+
+// Convert from string to long, returning 0 on exception
+long StoLSafe(const string &from) {
+    try {
+        return std::stol(from);
+    } catch (...) {
+        return 0;
+    }
+}
+
+void ParseProcStatusFile(const string &path, LinuxParser::ProcessValues &values) {
+    auto line_processor = [&](string &line) -> bool {
+        string key, value;
+        std::istringstream line_stream(line);
+        line_stream >> key >> value;
+        if (key == "Uid:") {
+            values.user_id = value;
+        } else if (key == "VmSize:") {
+            values.vm_size = StoLSafe(value);
+        }
+        return true;
+    };
+    ProcessFileLines(path, line_processor);
+}
+
+vector<LinuxParser::ProcessValues> LinuxParser::ProcessValuesList() {
+    vector<int> pids = Pids();
+    vector<ProcessValues> values_list{};
+    map<string,string> users = NameById();
+
+    for(auto pid: pids) {
+        string path = kProcDirectory;
+        path.append(std::to_string(pid)).append("/").append(kStatusFilename);
+        ProcessValues values{};
+        values.pid = pid;
+        ParseProcStatusFile(path, values);
+        values.user = users[values.user_id];
+        values_list.push_back(values);
+    }
+    return values_list;
 }
 
 // TODO: Read and return the command associated with a process
