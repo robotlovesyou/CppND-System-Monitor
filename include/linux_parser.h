@@ -2,6 +2,7 @@
 #define SYSTEM_PARSER_H
 
 #include <fstream>
+#include<map>
 #include <regex>
 #include <string>
 
@@ -90,6 +91,7 @@ std::string Ram(int pid);
 std::string Uid(int pid);
 
 std::string User(int pid);
+std::map<std::string, std::string>NameById()
 
 long int UpTime(int pid);
 };  // namespace LinuxParser

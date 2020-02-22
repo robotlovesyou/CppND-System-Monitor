@@ -7,10 +7,52 @@
 
 #include "linux_parser.h"
 
+using std::map;
 using std::stof;
 using std::string;
 using std::to_string;
 using std::vector;
+
+// Split the provided string into parts delimited by a given character
+vector<string> SplitString(const string& str, char delim) {
+    vector<string>result{};
+    string part;
+    std::stringstream source(str);
+    while(std::getline(source, part, delim)) {
+        result.push_back(part);
+    }
+    return result;
+}
+
+void ProcessFileLines(const string& path, std::function<bool(string&)> f) {
+    string line;
+    std::ifstream file_stream(path);
+    if(!file_stream.is_open()) {
+        return;
+    }
+    while(std::getline(file_stream, line)) {
+        if(!f(line)) {
+            break;
+        }
+    }
+    file_stream.close();
+}
+
+// Return a map of user names by user id
+map<string,string>LinuxParser::NameById() {
+    map<string, string>result{};
+    auto line_processor = [&](string &line) -> bool {
+        vector<string> parts = SplitString(line, ':');
+        if (parts.size() >= 3) {
+            result[parts[0]] = parts[1];
+        }
+        return true;
+    };
+    ProcessFileLines(kPasswordPath, line_processor);
+    return result;
+}
+
+
 
 // Returns a string describing the operating system
 string LinuxParser::OperatingSystem() {
