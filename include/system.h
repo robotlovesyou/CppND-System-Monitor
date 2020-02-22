@@ -8,20 +8,22 @@
 #include "processor.h"
 
 class System {
- public:
-  Processor& Cpu();                   // TODO: See src/system.cpp
-  std::vector<Process>& Processes();  // TODO: See src/system.cpp
-  static float MemoryUtilization();   // TODO: See src/system.cpp
-  static long UpTime();                      // TODO: See src/system.cpp
-  static int TotalProcesses();               // TODO: See src/system.cpp
-  static int RunningProcesses();             // TODO: See src/system.cpp
-  static std::string Kernel();               // TODO: See src/system.cpp
-  static std::string OperatingSystem();      // TODO: See src/system.cpp
+public:
+    Processor& Cpu();                      // TODO: See src/system.cpp
+    std::vector<Process>& Processes();     // TODO: See src/system.cpp
+    static float MemoryUtilization();      // TODO: See src/system.cpp
+    static long UpTime();                  // TODO: See src/system.cpp
+    static int TotalProcesses();           // TODO: See src/system.cpp
+    static int RunningProcesses();         // TODO: See src/system.cpp
+    static std::string Kernel();           // TODO: See src/system.cpp
+    static std::string OperatingSystem();  // TODO: See src/system.cpp
 
-  // TODO: Define any necessary private members
- private:
-  Processor cpu_ = {};
-  std::vector<Process> processes_ = {};
+    // TODO: Define any necessary private members
+private:
+    Processor cpu_ = {};
+    std::vector<Process> processes_ = {};
+    std::map<int, LinuxParser::ProcessValues> last_process_values_{};
+    long prev_uptime_{};
 };
 
 #endif

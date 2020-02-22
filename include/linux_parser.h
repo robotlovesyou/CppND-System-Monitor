@@ -2,7 +2,7 @@
 #define SYSTEM_PARSER_H
 
 #include <fstream>
-#include<map>
+#include <map>
 #include <regex>
 #include <string>
 
@@ -73,6 +73,8 @@ struct CPUValues {
   long guest_nice{};
 };
 
+int CountCores();
+
 void CpuUtilization(CPUValues &values);
 
 long Jiffies();
@@ -84,34 +86,39 @@ long ActiveJiffies(int pid);
 long IdleJiffies();
 
 // Processes
-
-
 enum PasswdParts {
-    kName = 0,
-    kPassword,
-    kUserId,
-    kGroupId,
-    kGecos,
-    kHomeDir,
-    kShell
+  kName = 0,
+  kPassword,
+  kUserId,
+  kGroupId,
+  kGecos,
+  kHomeDir,
+  kShell
 };
 
 struct ProcessValues {
-public:
-    int pid{};
-    std::string user_id{};
-    std::string user{};
-    long vm_size{};
+ public:
+  int pid{};
+  std::string user_id{};
+  std::string user{};
+  long vm_size{};
+  long utime_ticks;
+  long stime_ticks;
+  long cutime_ticks;
+  long cstime_ticks;
+  long starttime_ticks;
+  std::string command{};
 };
+
 std::vector<ProcessValues> ProcessValuesList();
-std::string Command(int pid);
 
 std::string Ram(int pid);
 
 std::string Uid(int pid);
 
 std::string User(int pid);
-std::map<std::string, std::string>NameById();
+
+std::map<std::string, std::string> NameById();
 
 long int UpTime(int pid);
 };  // namespace LinuxParser

@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <algorithm>
-#include <iostream>
 #include <cstddef>
+#include <iostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -22,14 +22,31 @@ using std::vector;
 Processor& System::Cpu() { return cpu_; }
 
 // container composed of the system's processes
-vector<Process>& System::Processes() {
-    // TODO: Do something useful with the processes class member...
+vector<Process>& System::Processes()
+{
     processes_.clear();
     vector<ProcessValues> process_list = LinuxParser::ProcessValuesList();
-    for(auto const &pv: process_list) {
-        Process process(pv);
+
+    long system_uptime = LinuxParser::UpTime();
+
+    Process::SystemInfo system_info{system_uptime, prev_uptime_};
+    for (auto const& pv : process_list) {
+        ProcessValues last;
+        if (last_process_values_.find(pv.pid)!=last_process_values_.end()) {
+            last = last_process_values_[pv.pid];
+        }
+        else {
+            last = pv;
+        }
+
+        Process::ProcessInfo process_info{pv, last};
+        Process process(system_info, process_info);
         processes_.push_back(process);
+        last_process_values_[pv.pid] = pv;
     }
+
+    prev_uptime_ = system_uptime;
+    std::sort(processes_.begin(), processes_.end());
     return processes_;
 }
 
@@ -38,11 +55,12 @@ std::string System::Kernel() { return LinuxParser::Kernel(); }
 
 // Calculates current memory utilization.
 // calculation based on answer given at https://stackoverflow.com/a/41251290
-float System::MemoryUtilization() {
-  MemoryValues values{};
-  LinuxParser::MemoryUtilization(values);
-  return (float)(values.total - values.free) /
-         std::max((float)values.total, 1.0f);
+float System::MemoryUtilization()
+{
+    MemoryValues values{};
+    LinuxParser::MemoryUtilization(values);
+    return (float) (values.total-values.free)/
+            std::max((float) values.total, 1.0f);
 }
 
 // Returns the name of the operating system.
@@ -55,6 +73,4 @@ int System::RunningProcesses() { return LinuxParser::RunningProcesses(); }
 int System::TotalProcesses() { return LinuxParser::TotalProcesses(); }
 
 // Return the number of seconds since the system started running
-long int System::UpTime() {
-    return LinuxParser::UpTime();
-}
+long int System::UpTime() { return LinuxParser::UpTime(); }
