@@ -7,10 +7,12 @@
 #include <string>
 
 namespace LinuxParser {
-// Paths
+
+/**
+ * Proc File Path Constants
+ */
 const std::string kProcDirectory{"/proc/"};
 const std::string kCmdlineFilename{"/cmdline"};
-const std::string kCpuinfoFilename{"/cpuinfo"};
 const std::string kStatusFilename{"/status"};
 const std::string kStatFilename{"/stat"};
 const std::string kUptimeFilename{"/uptime"};
@@ -19,11 +21,15 @@ const std::string kVersionFilename{"/version"};
 const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
-// System
-// Key constants
+/**
+ * Proc file key constants
+ */
 const std::string kMemTotal{"MemTotal"};
 const std::string kMemFree{"MemFree"};
-// Container for Memory Utilization values
+
+/**
+ * Container for memory utilization values returned by the parser
+ */
 struct MemoryValues {
  public:
   long total{};
@@ -48,8 +54,16 @@ long UpTime();
  */
 std::vector<int> Pids();
 
+/**
+ * Returns the total number of processes on the system
+ * @return
+ */
 int TotalProcesses();
 
+/**
+ * Returns the number of running processes on the system
+ * @return
+ */
 int RunningProcesses();
 
 /**
@@ -64,7 +78,9 @@ std::string OperatingSystem();
  */
 std::string Kernel();
 
-// Container for CPU Utilization values
+/**
+ * Container for CPU Utilization values returned by the parser
+ */
 struct CPUValues {
  public:
   long user{};
@@ -85,15 +101,9 @@ struct CPUValues {
  */
 void CpuUtilization(CPUValues &values);
 
-long Jiffies();
-
-long ActiveJiffies();
-
-long ActiveJiffies(int pid);
-
-long IdleJiffies();
-
-// Processes
+/**
+ * Enum of offsets of parts of the /etc/passwd file
+ */
 enum PasswdParts {
   kName = 0,
   kPassword,
@@ -104,6 +114,9 @@ enum PasswdParts {
   kShell
 };
 
+/**
+ * Container for process values returned by the parser
+ */
 struct ProcessValues {
  public:
   int pid{};
@@ -112,8 +125,6 @@ struct ProcessValues {
   long vm_size{};
   long utime_ticks;
   long stime_ticks;
-  long cutime_ticks;
-  long cstime_ticks;
   long starttime_ticks;
   std::string command{};
 };
@@ -125,15 +136,12 @@ struct ProcessValues {
 std::vector<ProcessValues> ProcessValuesList();
 
 
-std::string User(int pid);
-
 /**
  * Return a map of user names indexed by user id
  * @return
  */
 std::map<std::string, std::string> NameById();
 
-long int UpTime(int pid);
 };  // namespace LinuxParser
 
 #endif

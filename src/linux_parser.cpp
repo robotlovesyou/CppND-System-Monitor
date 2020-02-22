@@ -263,15 +263,6 @@ long StoLSafe(const string &from) {
   }
 }
 
-
-int StoISafe(const string &from) {
-  try {
-    return std::stoi(from);
-  } catch (...) {
-    return 0;
-  }
-}
-
 void ParseProcStatusFile(const string &path,
                          LinuxParser::ProcessValues &values) {
   auto line_processor = [&](string &line) -> bool {
@@ -305,8 +296,6 @@ void ParseProcStatFile(const string &path, LinuxParser::ProcessValues &values) {
     if (parts.size() >= kStartTime) {
       values.utime_ticks = StoLSafe(parts[kUtime]);
       values.stime_ticks = StoLSafe(parts[kStime]);
-      values.cutime_ticks = StoLSafe(parts[kCutime]);
-      values.cstime_ticks = StoLSafe(parts[kCstime]);
       values.starttime_ticks = StoLSafe(parts[kStartTime]);
     }
     return false;  // exit after the first line
