@@ -91,7 +91,7 @@ std::string Ram(int pid);
 std::string Uid(int pid);
 
 std::string User(int pid);
-std::map<std::string, std::string>NameById()
+std::map<std::string, std::string>NameById();
 
 long int UpTime(int pid);
 };  // namespace LinuxParser
