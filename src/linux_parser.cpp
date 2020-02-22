@@ -22,29 +22,6 @@ static const unsigned int kCutime = 15;
 static const unsigned int kCstime = 16;
 static const unsigned int kStartTime = 21;
 
-/**
- * Module private method declarations
- */
-vector<string> SplitString(const string &str, char delim);
-
-vector<string> SplitLine(const string &str);
-
-int ProcessCount(const string &file_path, const string &desired_key);
-
-void ProcessFileLines(const string &path, std::function<bool(string &)> f);
-
-long StoLSafe(const string &from);
-
-string ReadCommandFile(const string &path);
-
-void ParseProcStatFile(const string &path, LinuxParser::ProcessValues &values);
-
-void ParseProcStatusFile(const string &path,
-                         LinuxParser::ProcessValues &values);
-
-static inline void rtrim(std::string &s);
-
-int StoISafe(const string &from);
 
 /**
  * Split the provided string into parts delimited by a given delimiter
@@ -52,6 +29,64 @@ int StoISafe(const string &from);
  * @param delim
  * @return
  */
+vector<string> SplitString(const string &str, char delim);
+
+/**
+ * Split the provided string into parts
+ * @param str
+ * @return
+ */
+vector<string> SplitLine(const string &str);
+
+/**
+ * Collect the desired process count value
+ * @param file_path
+ * @param desired_key
+ * @return
+ */
+int ProcessCount(const string &file_path, const string &desired_key);
+
+/**
+ * Open the required file and then read each line in turn
+ * and pass it to the provided lambda until said lambda returns false
+ * or the file ends.
+ * @param path
+ * @param f
+ */
+void ProcessFileLines(const string &path, std::function<bool(string &)> f);
+
+/**
+ * Convert from string to long, returning 0 on exception
+ * @param from
+ * @return
+ */
+long StoLSafe(const string &from);
+
+/**
+ * Read and return the command associated with a process
+ * @param path
+ * @return
+ */
+string ReadCommandFile(const string &path);
+
+/**
+ * Parse desired values from a process stat file into the provided ProcessValues
+ * @param path
+ * @param values
+ */
+void ParseProcStatFile(const string &path, LinuxParser::ProcessValues &values);
+
+/**
+ * Read desired values from a processes status file into the provided
+ * ProcessValues
+ * @param path
+ * @param values
+ */
+void ParseProcStatusFile(const string &path,
+                         LinuxParser::ProcessValues &values);
+
+
+
 vector<string> SplitString(const string &str, char delim) {
   vector<string> result{};
   string part;
@@ -62,11 +97,6 @@ vector<string> SplitString(const string &str, char delim) {
   return result;
 }
 
-/**
- * Split the provided string into parts
- * @param str
- * @return
- */
 vector<string> SplitLine(const string &str) {
   vector<string> result{};
   string part;
@@ -77,12 +107,7 @@ vector<string> SplitLine(const string &str) {
   return result;
 }
 
-/**
- * Collect the desired process count value
- * @param file_path
- * @param desired_key
- * @return
- */
+
 int ProcessCount(const string &file_path, const string &desired_key) {
   int value;
   auto line_processor = [&](string &line) -> bool {
@@ -94,13 +119,7 @@ int ProcessCount(const string &file_path, const string &desired_key) {
   return value;
 }
 
-/**
- * Open the required file and then read each line in turn
- * and pass it to the provided lambda until said lambda returns false
- * or the file ends.
- * @param path
- * @param f
- */
+
 void ProcessFileLines(const string &path, std::function<bool(string &)> f) {
   string line;
   std::ifstream file_stream(path);
@@ -115,10 +134,6 @@ void ProcessFileLines(const string &path, std::function<bool(string &)> f) {
   file_stream.close();
 }
 
-/**
- * Return a map of user names by user id
- * @return
- */
 map<string, string> LinuxParser::NameById() {
   map<string, string> result{};
   auto line_processor = [&](string &line) -> bool {
@@ -132,10 +147,6 @@ map<string, string> LinuxParser::NameById() {
   return result;
 }
 
-/**
- * Returns a string describing the operating system
- * @return
- */
 string LinuxParser::OperatingSystem() {
   string key;
   string value;
@@ -156,10 +167,6 @@ string LinuxParser::OperatingSystem() {
   return value;
 }
 
-/**
- * Returns a string describing the kernel
- * @return
- */
 string LinuxParser::Kernel() {
   string os, kernel, version;
   auto line_processor = [&](string &line) -> bool {
@@ -171,10 +178,7 @@ string LinuxParser::Kernel() {
   return kernel;
 }
 
-/**
- * Return a vector of integers, one for each running process
- * @return
- */
+
 vector<int> LinuxParser::Pids() {
   vector<int> pids;
   DIR *directory = opendir(kProcDirectory.c_str());
@@ -194,10 +198,7 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-/**
- * Fills out the provided MemoryValues with values parsed from /proc/meminfo;
- * @param values
- */
+
 void LinuxParser::MemoryUtilization(MemoryValues &values) {
   auto line_processor = [&](string &line) -> bool {
     std::istringstream line_stream(line);
@@ -214,10 +215,6 @@ void LinuxParser::MemoryUtilization(MemoryValues &values) {
   ProcessFileLines(kProcDirectory + kMeminfoFilename, line_processor);
 }
 
-/**
- * Read and return the system uptime
- * @return
- */
 long LinuxParser::UpTime() {
   double uptime, idle_time;
   auto line_processor = [&](string &line) -> bool {
@@ -229,23 +226,6 @@ long LinuxParser::UpTime() {
   return (long)uptime;
 }
 
-// TODO: Read and return the number of jiffies for the system
-long LinuxParser::Jiffies() { return 0; }
-
-// TODO: Read and return the number of active jiffies for a PID
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::ActiveJiffies(int pid[[maybe_unused]]) { return 0; }
-
-// TODO: Read and return the number of active jiffies for the system
-long LinuxParser::ActiveJiffies() { return 0; }
-
-// TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() { return 0; }
-
-/**
- * Fills out the provided CPUValues structure with values parsed from /proc/stat
- * @param values
- */
 void LinuxParser::CpuUtilization(CPUValues &values) {
   auto line_processor = [&](string &line) -> bool {
     string cpu;
@@ -274,11 +254,7 @@ int LinuxParser::RunningProcesses() {
   return ProcessCount(kProcDirectory + kStatFilename, "procs_running");
 }
 
-/**
- * Convert from string to long, returning 0 on exception
- * @param from
- * @return
- */
+
 long StoLSafe(const string &from) {
   try {
     return std::stol(from);
@@ -287,11 +263,7 @@ long StoLSafe(const string &from) {
   }
 }
 
-/**
- * Convert from string to int, returning 0 on exception
- * @param from
- * @return
- */
+
 int StoISafe(const string &from) {
   try {
     return std::stoi(from);
@@ -300,12 +272,6 @@ int StoISafe(const string &from) {
   }
 }
 
-/**
- * Read desired values from a processes status file into the provided
- * ProcessValues
- * @param path
- * @param values
- */
 void ParseProcStatusFile(const string &path,
                          LinuxParser::ProcessValues &values) {
   auto line_processor = [&](string &line) -> bool {
@@ -322,11 +288,7 @@ void ParseProcStatusFile(const string &path,
   ProcessFileLines(path, line_processor);
 }
 
-/**
- * Read and return the command associated with a process
- * @param path
- * @return
- */
+
 string ReadCommandFile(const string &path) {
   string command;
   auto line_processor = [&](string &line) -> bool {
@@ -337,11 +299,6 @@ string ReadCommandFile(const string &path) {
   return command;
 }
 
-/**
- * Parse desired values from a process stat file into the provided ProcessValues
- * @param path
- * @param values
- */
 void ParseProcStatFile(const string &path, LinuxParser::ProcessValues &values) {
   auto line_processor = [&](string &line) -> bool {
     vector<string> parts = SplitLine(line);
@@ -357,10 +314,6 @@ void ParseProcStatFile(const string &path, LinuxParser::ProcessValues &values) {
   ProcessFileLines(path, line_processor);
 }
 
-/**
- * Create a vector of filled out process values. One for each process.
- * @return
- */
 vector<LinuxParser::ProcessValues> LinuxParser::ProcessValuesList() {
   vector<int> pids = Pids();
   vector<ProcessValues> values_list{};
@@ -381,45 +334,3 @@ vector<LinuxParser::ProcessValues> LinuxParser::ProcessValuesList() {
   }
   return values_list;
 }
-
-/**
- * trim from end (in place). Taken from stack overflow answer:
- * https://stackoverflow.com/a/217605
- * @param s
- */
-static inline void rtrim(std::string &s) {
-  s.erase(std::find_if(s.rbegin(), s.rend(),
-                       [](int ch) { return !std::isspace(ch); })
-              .base(),
-          s.end());
-}
-
-/**
- * Count the total nunber of CPU cores
- * @return
- */
-int LinuxParser::CountCores() {
-  int count = 0;
-  auto line_processor = [&](string &line) -> bool {
-    vector<string> parts = SplitString(line, ':');
-    if (parts.size() == 2) {
-      string key = parts[0];
-      rtrim(key);
-      if (key == "cpu cores") {
-        count += StoISafe(parts[1]);
-      }
-    }
-    return true;
-  };
-  ProcessFileLines(LinuxParser::kProcDirectory + LinuxParser::kCpuinfoFilename,
-                   line_processor);
-  return count;
-}
-
-// TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Ram(int pid[[maybe_unused]]) { return string(); }
-
-// TODO: Read and return the uptime of a process
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid[[maybe_unused]]) { return 0; }

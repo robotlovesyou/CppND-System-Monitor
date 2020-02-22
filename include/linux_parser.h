@@ -30,33 +30,39 @@ struct MemoryValues {
   long free{};
 };
 
+/**
+ * Fills out the provided MemoryValues with values parsed from /proc/meminfo;
+ * @param values
+ */
 void MemoryUtilization(MemoryValues &values);
 
+/**
+ * Read and return the system uptime
+ * @return
+ */
 long UpTime();
 
+/**
+ * Return a vector of integers, one for each running process
+ * @return
+ */
 std::vector<int> Pids();
 
 int TotalProcesses();
 
 int RunningProcesses();
 
+/**
+ * Returns a string describing the operating system
+ * @return
+ */
 std::string OperatingSystem();
 
+/**
+ * Returns a string describing the kernel
+ * @return
+ */
 std::string Kernel();
-
-// CPU
-enum CPUStates {
-  kUser_ = 0,
-  kNice_,
-  kSystem_,
-  kIdle_,
-  kIOwait_,
-  kIRQ_,
-  kSoftIRQ_,
-  kSteal_,
-  kGuest_,
-  kGuestNice_
-};
 
 // Container for CPU Utilization values
 struct CPUValues {
@@ -73,8 +79,10 @@ struct CPUValues {
   long guest_nice{};
 };
 
-int CountCores();
-
+/**
+ * Fills out the provided CPUValues structure with values parsed from /proc/stat
+ * @param values
+ */
 void CpuUtilization(CPUValues &values);
 
 long Jiffies();
@@ -110,14 +118,19 @@ struct ProcessValues {
   std::string command{};
 };
 
+/**
+ * Create a vector of filled out process values. One for each process.
+ * @return
+ */
 std::vector<ProcessValues> ProcessValuesList();
 
-std::string Ram(int pid);
-
-std::string Uid(int pid);
 
 std::string User(int pid);
 
+/**
+ * Return a map of user names indexed by user id
+ * @return
+ */
 std::map<std::string, std::string> NameById();
 
 long int UpTime(int pid);
