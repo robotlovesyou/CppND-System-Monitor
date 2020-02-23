@@ -1,13 +1,7 @@
+#include "process.h"
 #include <unistd.h>
-#include <cctype>
-#include <iostream>
-#include <sstream>
 #include <string>
 #include <utility>
-#include <vector>
-#include <processor.h>
-
-#include "process.h"
 
 using std::string;
 using std::to_string;
@@ -20,52 +14,58 @@ using std::vector;
  * @return
  */
 float process_secs(long utime, long stime) {
-    return (float)(utime+stime) / (float)sysconf(_SC_CLK_TCK);
+  return (float)(utime + stime) / (float)sysconf(_SC_CLK_TCK);
 }
 
-// Return this process's ID
-int Process::Pid() const { return process_info_.values.pid; }
+int Process::Pid() const { return process_values_.pid; }
 
-// Return this process's CPU utilization
-float Process::CpuUtilization() const
-{
-    float total_time = process_secs(process_info_.values.utime_ticks, process_info_.values.stime_ticks);
-    float prev_time = process_secs(process_info_.prev_values.utime_ticks, process_info_.prev_values.stime_ticks);
+float Process::CpuUtilization() const { return utilization_; }
 
-    float time_delta = (float)system_info_.uptime - (float)system_info_.prev_uptime;
-    float process_delta = total_time - prev_time;
-    float utilization = process_delta / time_delta;
-    return utilization;
+string Process::Command() { return process_values_.command; }
+
+string Process::Ram() {
+  if ((unsigned long)process_values_.vm_size < MB_KB) {
+    return to_string(process_values_.vm_size) + " KB";
+  }
+  return to_string(process_values_.vm_size / MB_KB) + " MB";
 }
 
-// Return the command that generated this process
-string Process::Command() { return process_info_.values.command; }
+string Process::User() { return process_values_.user; }
 
-// Return this process's memory utilization
-string Process::Ram()
-{
-    if ((unsigned long) process_info_.values.vm_size<MB_KB) {
-        return to_string(process_info_.values.vm_size)+" KB";
-    }
-    return to_string(process_info_.values.vm_size/MB_KB)+" MB";
+long int Process::UpTime() const {
+  return uptime_ - (process_values_.starttime_ticks / sysconf(_SC_CLK_TCK));
 }
 
-// Return the user (name) that generated this process
-string Process::User() { return process_info_.values.user; }
-
-// Return the age of this process (in seconds)
-long int Process::UpTime() const
-{
-    return system_info_.uptime-
-            (process_info_.values.starttime_ticks/sysconf(_SC_CLK_TCK));
+bool Process::operator<(Process const& a) const {
+  return a.CpuUtilization() < this->CpuUtilization();
 }
 
-// the provided process as being less than this if it has lower cpu utilization
-bool Process::operator<(Process const& a) const
-{
-    return a.CpuUtilization()<this->CpuUtilization();
+Process::Process(long uptime, ProcessValues process_values)
+    : uptime_(uptime),
+      prev_uptime_{},
+      process_values_(std::move(process_values)),
+      prev_process_values_{} {
+  // This first call will calculate the utilization since
+  // System start since the time delta will be 1.0
+  UpdateUtilization();
+}
+void Process::Update(long uptime, ProcessValues process_values) {
+  prev_uptime_ = uptime_;
+  uptime_ = uptime;
+  prev_process_values_ = process_values_;
+  process_values_ = std::move(process_values);
+  // This will calculate the utilization since the last update
+  UpdateUtilization();
 }
 
-Process::Process(Process::SystemInfo system_info,
-        Process::ProcessInfo process_info)
-        :system_info_(system_info), process_info_(std::move(process_info)) { }
+void Process::UpdateUtilization() {
+  float total_time =
+      process_secs(process_values_.utime_ticks, process_values_.stime_ticks);
+  float prev_time = process_secs(prev_process_values_.utime_ticks,
+                                 prev_process_values_.stime_ticks);
+
+  float time_delta = std::max((float)uptime_ - (float)prev_uptime_, 1.0f);
+
+  float process_delta = total_time - prev_time;
+  utilization_ = process_delta / time_delta;
+}

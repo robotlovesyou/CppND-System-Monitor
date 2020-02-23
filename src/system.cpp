@@ -1,76 +1,62 @@
-#include <unistd.h>
+#include "system.h"
+
 #include <algorithm>
-#include <cstddef>
-#include <iostream>
-#include <set>
-#include <string>
 #include <vector>
 
 #include "linux_parser.h"
 #include "process.h"
 #include "processor.h"
-#include "system.h"
 
 using LinuxParser::MemoryValues;
 using LinuxParser::ProcessValues;
-using std::set;
 using std::size_t;
 using std::string;
 using std::vector;
 
-// Accessor function for cpu member
 Processor& System::Cpu() { return cpu_; }
 
-// container composed of the system's processes
-vector<Process>& System::Processes()
-{
-    processes_.clear();
-    vector<ProcessValues> process_list = LinuxParser::ProcessValuesList();
+vector<Process>& System::Processes() {
+  processes_.clear();
+  vector<ProcessValues> process_list = LinuxParser::ProcessValuesList();
 
-    long system_uptime = LinuxParser::UpTime();
+  long system_uptime = LinuxParser::UpTime();
 
-    Process::SystemInfo system_info{system_uptime, prev_uptime_};
-    for (auto const& pv : process_list) {
-        ProcessValues last;
-        if (last_process_values_.find(pv.pid)!=last_process_values_.end()) {
-            last = last_process_values_[pv.pid];
-        }
-        else {
-            last = pv;
-        }
-
-        Process::ProcessInfo process_info{pv, last};
-        Process process(system_info, process_info);
-        processes_.push_back(process);
-        last_process_values_[pv.pid] = pv;
+  for (auto const& pv : process_list) {
+    if (process_by_pid_.find(pv.pid) != process_by_pid_.end()) {
+      Process process = process_by_pid_.find(pv.pid)->second;
+      process.Update(system_uptime, pv);
+      processes_.push_back(process);
+    } else {
+      Process process(system_uptime, pv);
+      processes_.push_back(process);
     }
+  }
 
-    prev_uptime_ = system_uptime;
-    std::sort(processes_.begin(), processes_.end());
-    return processes_;
+  // Clear the process map and re-add to prevent a slow memory leak
+  // due to exited processes never being cleaned up
+  process_by_pid_.clear();
+  for (auto const& process : processes_) {
+    process_by_pid_.emplace(process.Pid(), process);
+  }
+
+  std::sort(processes_.begin(), processes_.end());
+  return processes_;
 }
 
-// Returns the name of the kernel
 std::string System::Kernel() { return LinuxParser::Kernel(); }
 
-// Calculates current memory utilization.
-// calculation based on answer given at https://stackoverflow.com/a/41251290
-float System::MemoryUtilization()
-{
-    MemoryValues values{};
-    LinuxParser::MemoryUtilization(values);
-    return (float) (values.total-values.free)/
-            std::max((float) values.total, 1.0f);
+float System::MemoryUtilization() {
+  // calculation based on answer given at https://stackoverflow.com/a/41251290
+  MemoryValues values{};
+  LinuxParser::MemoryUtilization(values);
+  return (float)(values.total - values.free) /
+         std::max((float)values.total, 1.0f);
 }
 
-// Returns the name of the operating system.
 std::string System::OperatingSystem() { return LinuxParser::OperatingSystem(); }
 
-// Return the number of processes actively running on the system
 int System::RunningProcesses() { return LinuxParser::RunningProcesses(); }
 
-// Return the total number of processes on the system
 int System::TotalProcesses() { return LinuxParser::TotalProcesses(); }
 
-// Return the number of seconds since the system started running
 long int System::UpTime() { return LinuxParser::UpTime(); }
