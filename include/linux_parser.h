@@ -135,7 +135,6 @@ struct ProcessValues {
  */
 std::vector<ProcessValues> ProcessValuesList();
 
-
 /**
  * Return a map of user names indexed by user id
  * @return

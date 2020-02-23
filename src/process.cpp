@@ -13,12 +13,18 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-// Return this process's ID
-int Process::Pid() const { return process_info_.values.pid; }
-
+/**
+ * convert the provided ticks into seconds
+ * @param utime
+ * @param stime
+ * @return
+ */
 float process_secs(long utime, long stime) {
     return (float)(utime+stime) / (float)sysconf(_SC_CLK_TCK);
 }
+
+// Return this process's ID
+int Process::Pid() const { return process_info_.values.pid; }
 
 // Return this process's CPU utilization
 float Process::CpuUtilization() const

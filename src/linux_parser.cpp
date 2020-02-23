@@ -1,12 +1,13 @@
+#include "linux_parser.h"
+
 #include <dirent.h>
-#include <unistd.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "linux_parser.h"
-
+using std::istringstream;
 using std::map;
 using std::stof;
 using std::string;
@@ -18,10 +19,7 @@ using std::vector;
  */
 static const unsigned int kUtime = 13;
 static const unsigned int kStime = 14;
-static const unsigned int kCutime = 15;
-static const unsigned int kCstime = 16;
 static const unsigned int kStartTime = 21;
-
 
 /**
  * Split the provided string into parts delimited by a given delimiter
@@ -53,7 +51,10 @@ int ProcessCount(const string &file_path, const string &desired_key);
  * @param path
  * @param f
  */
-void ProcessFileLines(const string &path, std::function<bool(string &)> f);
+void ProcessFileLines(const string &path,
+                      const std::function<bool(string &)> &f);
+void ProcessFileLines(const string &path,
+                      const std::function<bool(istringstream &)> &f);
 
 /**
  * Convert from string to long, returning 0 on exception
@@ -85,8 +86,6 @@ void ParseProcStatFile(const string &path, LinuxParser::ProcessValues &values);
 void ParseProcStatusFile(const string &path,
                          LinuxParser::ProcessValues &values);
 
-
-
 vector<string> SplitString(const string &str, char delim) {
   vector<string> result{};
   string part;
@@ -107,11 +106,9 @@ vector<string> SplitLine(const string &str) {
   return result;
 }
 
-
 int ProcessCount(const string &file_path, const string &desired_key) {
   int value;
-  auto line_processor = [&](string &line) -> bool {
-    std::istringstream line_stream(line);
+  auto line_processor = [&](istringstream &line_stream) -> bool {
     string key;
     return !((line_stream >> key >> value) && key == desired_key);
   };
@@ -119,8 +116,8 @@ int ProcessCount(const string &file_path, const string &desired_key) {
   return value;
 }
 
-
-void ProcessFileLines(const string &path, std::function<bool(string &)> f) {
+void ProcessFileLines(const string &path,
+                      const std::function<bool(string &)> &f) {
   string line;
   std::ifstream file_stream(path);
   if (!file_stream.is_open()) {
@@ -132,6 +129,15 @@ void ProcessFileLines(const string &path, std::function<bool(string &)> f) {
     }
   }
   file_stream.close();
+}
+
+void ProcessFileLines(const string &path,
+                      const std::function<bool(istringstream &)> &f) {
+  auto line_processor = [&](string &line) -> bool {
+    istringstream line_stream(line);
+    return f(line_stream);
+  };
+  ProcessFileLines(path, line_processor);
 }
 
 map<string, string> LinuxParser::NameById() {
@@ -154,7 +160,7 @@ string LinuxParser::OperatingSystem() {
     std::replace(line.begin(), line.end(), ' ', '_');
     std::replace(line.begin(), line.end(), '=', ' ');
     std::replace(line.begin(), line.end(), '"', ' ');
-    std::istringstream linestream(line);
+    istringstream linestream(line);
     while (linestream >> key >> value) {
       if (key == "PRETTY_NAME") {
         std::replace(value.begin(), value.end(), '_', ' ');
@@ -169,15 +175,13 @@ string LinuxParser::OperatingSystem() {
 
 string LinuxParser::Kernel() {
   string os, kernel, version;
-  auto line_processor = [&](string &line) -> bool {
-    std::istringstream linestream(line);
-    linestream >> os >> version >> kernel;
+  auto line_processor = [&](istringstream &line_stream) -> bool {
+    line_stream >> os >> version >> kernel;
     return false;  // we only need to read one line
   };
   ProcessFileLines(kProcDirectory + kVersionFilename, line_processor);
   return kernel;
 }
-
 
 vector<int> LinuxParser::Pids() {
   vector<int> pids;
@@ -198,10 +202,8 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
-
 void LinuxParser::MemoryUtilization(MemoryValues &values) {
-  auto line_processor = [&](string &line) -> bool {
-    std::istringstream line_stream(line);
+  auto line_processor = [&](istringstream &line_stream) -> bool {
     string key;
     long val;
     line_stream >> key >> val;
@@ -217,8 +219,7 @@ void LinuxParser::MemoryUtilization(MemoryValues &values) {
 
 long LinuxParser::UpTime() {
   double uptime, idle_time;
-  auto line_processor = [&](string &line) -> bool {
-    std::istringstream line_stream(line);
+  auto line_processor = [&](istringstream &line_stream) -> bool {
     line_stream >> uptime >> idle_time;
     return false;  // done after the first line
   };
@@ -227,9 +228,8 @@ long LinuxParser::UpTime() {
 }
 
 void LinuxParser::CpuUtilization(CPUValues &values) {
-  auto line_processor = [&](string &line) -> bool {
+  auto line_processor = [&](istringstream &line_stream) -> bool {
     string cpu;
-    std::istringstream line_stream(line);
     line_stream >> cpu >> values.user >> values.nice >> values.system >>
         values.idle >> values.io_wait >> values.irq >> values.soft_irq >>
         values.steal >> values.guest >> values.guest_nice;
@@ -254,7 +254,6 @@ int LinuxParser::RunningProcesses() {
   return ProcessCount(kProcDirectory + kStatFilename, "procs_running");
 }
 
-
 long StoLSafe(const string &from) {
   try {
     return std::stol(from);
@@ -265,9 +264,8 @@ long StoLSafe(const string &from) {
 
 void ParseProcStatusFile(const string &path,
                          LinuxParser::ProcessValues &values) {
-  auto line_processor = [&](string &line) -> bool {
+  auto line_processor = [&](istringstream &line_stream) -> bool {
     string key, value;
-    std::istringstream line_stream(line);
     line_stream >> key >> value;
     if (key == "Uid:") {
       values.user_id = value;
@@ -278,7 +276,6 @@ void ParseProcStatusFile(const string &path,
   };
   ProcessFileLines(path, line_processor);
 }
-
 
 string ReadCommandFile(const string &path) {
   string command;
