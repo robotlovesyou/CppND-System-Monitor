@@ -238,18 +238,10 @@ void LinuxParser::CpuUtilization(CPUValues &values) {
   ProcessFileLines(kProcDirectory + kStatFilename, line_processor);
 }
 
-/**
- * Read and return the total number of processes
- * @return
- */
 int LinuxParser::TotalProcesses() {
   return ProcessCount(kProcDirectory + kStatFilename, "processes");
 }
 
-/**
- * Read and return the number of running processes
- * @return
- */
 int LinuxParser::RunningProcesses() {
   return ProcessCount(kProcDirectory + kStatFilename, "procs_running");
 }
